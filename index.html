@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pathly Open Catalog</title>
+<style>
+  :root {
+    --bg: #f7f9fc; --surface: #ffffff; --text: #05132e; --muted: #4f6685;
+    --accent: #009cbb; --accent-soft: rgba(0, 156, 187, 0.1); --border: rgba(13, 38, 73, 0.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #08111f; --surface: #101c2e; --text: #eaf2fb; --muted: #9fb3cb;
+      --accent: #2cc4e0; --accent-soft: rgba(44, 196, 224, 0.14); --border: rgba(255, 255, 255, 0.1);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 16px 64px; }
+  .kicker { color: var(--accent); font-weight: 700; letter-spacing: 0.08em; font-size: 13px; text-transform: uppercase; }
+  h1 { font-size: clamp(32px, 6vw, 48px); line-height: 1.1; margin: 8px 0 12px; }
+  .lede { color: var(--muted); font-size: 18px; max-width: 620px; margin: 0; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 32px 0; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 16px; }
+  .stat b { display: block; font-size: 28px; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 14px; }
+  h2 { font-size: 20px; margin: 36px 0 12px; }
+  code, pre { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px; }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; overflow-x: auto; margin: 0; }
+  input {
+    width: 100%; padding: 14px 16px; font: inherit; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 14px; outline: none;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  ul.results { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
+  ul.results li { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+  .meta { color: var(--muted); font-size: 14px; }
+  .pill { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 600; margin-right: 6px; }
+  a { color: var(--accent); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .button { display: inline-block; padding: 10px 16px; border-radius: 12px; text-decoration: none; font-weight: 600; background: var(--accent); color: #fff; }
+  .button.secondary { background: var(--accent-soft); color: var(--accent); }
+  @media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">Open data · CC BY 4.0</div>
+  <h1>Pathly Open Catalog</h1>
+  <p class="lede">A free database of competitions, science fairs, scholarships, programs, and the places where students can do the work. Use it in your own projects, and help keep it accurate.</p>
+
+  <div class="stats">
+    <div class="stat"><b id="opportunities">–</b><span>opportunities</span></div>
+    <div class="stat"><b id="places">–</b><span>places</span></div>
+    <div class="stat"><b id="organizations">–</b><span>organizations</span></div>
+  </div>
+  <p class="meta" id="version">Loading catalog…</p>
+
+  <h2>Search the catalog</h2>
+  <input id="search" type="search" placeholder="Try “science fair”, “ISEF”, or “Delaware”" aria-label="Search opportunities">
+  <ul class="results" id="results"></ul>
+
+  <h2>Use the API</h2>
+  <pre id="endpoints"></pre>
+
+  <div class="actions">
+    <a class="button" href="https://github.com/GuzziFlipFlops/pathly-catalog/issues/new/choose">Report or add a record</a>
+    <a class="button secondary" href="https://github.com/GuzziFlipFlops/pathly-catalog">View on GitHub</a>
+  </div>
+</main>
+<script>
+  const base = new URL("v1/", location.href);
+  const files = ["index.json", "opportunities.json", "places.json", "organizations.json", "opportunity_locations.json"];
+  document.getElementById("endpoints").textContent = files.map(f => new URL(f, base).href).join("\n");
+
+  let opportunities = [];
+  const results = document.getElementById("results");
+
+  function render(query) {
+    results.replaceChildren();
+    const q = query.trim().toLowerCase();
+    if (!q) return;
+    // Records with a known date first, then name matches, so actionable results lead.
+    const rank = o => (o.deadline || o.event_start ? 0 : 2) + (o.name.toLowerCase().includes(q) ? 0 : 1);
+    const matches = opportunities.filter(o =>
+      [o.name, o.subcategory, o.description_short, (o.eligible_states || []).join(" ")]
+        .filter(Boolean).join(" ").toLowerCase().includes(q)
+    ).sort((a, b) => rank(a) - rank(b)).slice(0, 8);
+    if (!matches.length) {
+      const li = document.createElement("li");
+      li.className = "meta";
+      li.textContent = "No matches. Know one that's missing? Report it below.";
+      results.append(li);
+      return;
+    }
+    for (const o of matches) {
+      const li = document.createElement("li");
+      const title = document.createElement("div");
+      const link = document.createElement("a");
+      link.href = o.official_url; link.textContent = o.name; link.rel = "noopener";
+      title.append(link);
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const pill = document.createElement("span");
+      pill.className = "pill"; pill.textContent = o.category;
+      const when = o.deadline ? `Deadline ${o.deadline}` : o.event_start ? `Starts ${o.event_start}` : "Date not listed";
+      meta.append(pill, `${o.id} · ${when}`);
+      li.append(title, meta);
+      results.append(li);
+    }
+  }
+
+  (async () => {
+    try {
+      const index = await (await fetch(new URL("index.json", base))).json();
+      for (const key of ["opportunities", "places", "organizations"]) {
+        document.getElementById(key).textContent = index.counts[key].toLocaleString();
+      }
+      document.getElementById("version").textContent = `Version ${index.version} · updated ${index.updated}`;
+      opportunities = await (await fetch(new URL("opportunities.json", base))).json();
+      const input = document.getElementById("search");
+      input.addEventListener("input", e => render(e.target.value));
+      render(input.value);
+    } catch {
+      document.getElementById("version").textContent = "Couldn't load the catalog. Open v1/index.json directly.";
+    }
+  })();
+</script>
+</body>
+</html>

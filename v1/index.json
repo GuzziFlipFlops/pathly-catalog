@@ -1,0 +1,21 @@
+{
+  "name": "Pathly Open Catalog",
+  "version": "2026.10.24",
+  "updated": "2026-10-24",
+  "license": "CC-BY-4.0",
+  "counts": {
+    "opportunities": 387,
+    "places": 772,
+    "organizations": 269,
+    "opportunity_locations": 1
+  },
+  "files": {
+    "opportunities": "https://GuzziFlipFlops.github.io/pathly-catalog/v1/opportunities.json",
+    "places": "https://GuzziFlipFlops.github.io/pathly-catalog/v1/places.json",
+    "organizations": "https://GuzziFlipFlops.github.io/pathly-catalog/v1/organizations.json",
+    "opportunity_locations": "https://GuzziFlipFlops.github.io/pathly-catalog/v1/opportunity_locations.json"
+  },
+  "mirror": "https://cdn.jsdelivr.net/gh/GuzziFlipFlops/pathly-catalog@main/v1/",
+  "schema": "https://github.com/GuzziFlipFlops/pathly-catalog/blob/main/SCHEMA.md",
+  "contribute": "https://github.com/GuzziFlipFlops/pathly-catalog/blob/main/CONTRIBUTING.md"
+}
