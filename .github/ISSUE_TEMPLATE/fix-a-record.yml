@@ -19,6 +19,12 @@ body:
       placeholder: The deadline should be 2027-03-09, not null.
     validations:
       required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Changed fields (from the form)
+      description: Optional. The suggested values as JSON, filled in by the website form.
+      render: json
   - type: input
     id: source
     attributes:

@@ -39,8 +39,25 @@ body:
         - Place (library, makerspace, lab, museum…)
     validations:
       required: true
+  - type: input
+    id: date
+    attributes:
+      label: Date
+      description: The deadline or the event date, if the official page lists one (YYYY-MM-DD).
+      placeholder: 2027-04-07 (event date)
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: City and state, or "Online".
+      placeholder: Newark, DE
+  - type: input
+    id: grades
+    attributes:
+      label: Who can join (grades)
+      placeholder: 9-12
   - type: textarea
     id: details
     attributes:
-      label: What students should know
-      description: Who can join, dates, cost, and where it happens. Only include what the official page says.
+      label: Short note (optional)
+      description: Cost, how to apply, or anything else the official page says. Only include what the official page says.
